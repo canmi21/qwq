@@ -26,6 +26,10 @@ struct VcsArgs {
 enum VcsCommand {
 	/// Create a commit with validated message format
 	Commit(crate::cmd::commit::Args),
+	/// Fast-forward main bookmark to latest commit
+	Land(crate::cmd::land::Args),
+	/// Push bookmarks to remote
+	Push(crate::cmd::push::Args),
 }
 
 pub fn run() -> anyhow::Result<()> {
@@ -33,6 +37,8 @@ pub fn run() -> anyhow::Result<()> {
 	match cli.command {
 		Command::Vcs(vcs) => match vcs.command {
 			VcsCommand::Commit(args) => crate::cmd::commit::execute(args),
+			VcsCommand::Land(args) => crate::cmd::land::execute(args),
+			VcsCommand::Push(args) => crate::cmd::push::execute(args),
 		},
 		Command::Fmt(args) => crate::cmd::fmt::execute(args),
 	}
