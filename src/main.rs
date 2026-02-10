@@ -1,9 +1,8 @@
-mod config;
+mod cmd;
 mod run;
 
 fn main() {
-	let config = config::load();
-	if let Err(e) = run::run(config) {
+	if let Err(e) = run::run() {
 		eprintln!("Error: {e:?}");
 		std::process::exit(1);
 	}
