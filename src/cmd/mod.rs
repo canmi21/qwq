@@ -1,3 +1,4 @@
+pub mod check;
 pub mod commit;
 pub mod diff;
 pub mod fmt;

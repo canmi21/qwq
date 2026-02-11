@@ -20,6 +20,7 @@ readme = false
 [dependencies]
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
+sha2 = "0.10"
 
 [lints]
 workspace = true

@@ -9,6 +9,8 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Command {
+	/// Run compliance checks
+	Check(crate::cmd::check::Args),
 	/// VCS operations (commit, land, push, ...)
 	#[command(alias = "git", alias = "jj")]
 	Vcs(VcsArgs),
@@ -41,6 +43,7 @@ enum VcsCommand {
 pub fn run() -> anyhow::Result<()> {
 	let cli = Cli::parse();
 	match cli.command {
+		Command::Check(args) => crate::cmd::check::execute(args),
 		Command::Vcs(vcs) => match vcs.command {
 			VcsCommand::Commit(args) => crate::cmd::commit::execute(args),
 			VcsCommand::Diff(args) => crate::cmd::diff::execute(args),
