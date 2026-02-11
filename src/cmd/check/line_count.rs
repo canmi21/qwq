@@ -8,7 +8,7 @@ const THRESHOLD: usize = 100;
 
 pub fn run(spec_dir: &Path, repo_root: &Path) -> anyhow::Result<Vec<String>> {
 	let files = collect_md_files(spec_dir)?;
-	let allowlist = load_allowlist(&repo_root.join("tools/check/allowlist.toml"))?;
+	let allowlist = load_allowlist_from_config()?;
 	let mut errors = Vec::new();
 
 	for file in &files {
@@ -46,43 +46,62 @@ struct AllowEntry {
 	hash: String,
 }
 
-fn load_allowlist(path: &Path) -> anyhow::Result<Vec<AllowEntry>> {
-	if !path.exists() {
+fn load_allowlist_from_config() -> anyhow::Result<Vec<AllowEntry>> {
+	let Some(path) = crate::config::find_config() else {
 		return Ok(Vec::new());
-	}
+	};
 
 	let content = std::fs::read_to_string(path)?;
 	let mut entries = Vec::new();
+	let mut in_section = false;
 	let mut file = String::new();
 	let mut check = String::new();
 	let mut hash = String::new();
 
 	for line in content.lines() {
-		if line == "[[entry]]" {
-			if !file.is_empty() {
+		let trimmed = line.trim();
+		if trimmed == "[[check.allowlist]]" {
+			if in_section && !file.is_empty() {
 				entries.push(AllowEntry {
 					file: file.clone(),
 					check: check.clone(),
 					hash: hash.clone(),
 				});
 			}
+			in_section = true;
 			file.clear();
 			check.clear();
 			hash.clear();
 			continue;
 		}
 
-		if let Some(val) = line
+		if trimmed.starts_with('[') {
+			if in_section && !file.is_empty() {
+				entries.push(AllowEntry {
+					file: file.clone(),
+					check: check.clone(),
+					hash: hash.clone(),
+				});
+			}
+			in_section = false;
+			continue;
+		}
+
+		if !in_section {
+			continue;
+		}
+
+		if let Some(val) = trimmed
 			.strip_prefix("file = \"")
 			.and_then(|s| s.strip_suffix('"'))
 		{
 			file = val.to_string();
-		} else if let Some(val) = line
+		} else if let Some(val) = trimmed
 			.strip_prefix("check = \"")
 			.and_then(|s| s.strip_suffix('"'))
 		{
 			check = val.to_string();
-		} else if let Some(val) = line
+		} else if let Some(val) = trimmed
 			.strip_prefix("hash = \"")
 			.and_then(|s| s.strip_suffix('"'))
 		{
@@ -90,7 +109,7 @@ fn load_allowlist(path: &Path) -> anyhow::Result<Vec<AllowEntry>> {
 		}
 	}
 
-	if !file.is_empty() {
+	if in_section && !file.is_empty() {
 		entries.push(AllowEntry { file, check, hash });
 	}
 
