@@ -1,4 +1,5 @@
 mod cmd;
+mod config;
 mod run;
 
 fn main() {
